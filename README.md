@@ -35,6 +35,12 @@ A silver UFO randomly zips across the top of the screen. Shoot it down to pause 
 *   **Full Controller Support:** Move with Analog Sticks or D-Pad, fire with face buttons, and pause with Start/Select.
 *   **Tactile Feedback:** Experience **Controller Rumble** and screen shake when taking damage.
 
+### 🖥️ **Desktop Versions**
+Automated builds for:
+*   🪟 **Windows:** Portable `.exe`
+*   🍎 **macOS:** `.dmg` installer
+*   🐧 **Linux:** `.AppImage`
+
 ### 💾 **Persistent Stats**
 *   **High Score Hall of Fame:** Achievement screen asks for your initials (3 letters) to save your legacy.
 *   **Auto-Save:** High scores, player initials, and volume settings are saved to your browser automatically.

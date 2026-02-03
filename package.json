@@ -11,6 +11,7 @@
     "electron": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .\"",
     "dist": "npm run build && electron-builder",
     "dist:win": "npm run build && electron-builder --win",
+    "dist:all": "npm run build && electron-builder --win --mac --linux",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
@@ -38,6 +39,14 @@
     ],
     "win": {
       "target": "portable",
+      "icon": "public/assets/logo.png"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "public/assets/logo.png"
+    },
+    "linux": {
+      "target": "AppImage",
       "icon": "public/assets/logo.png"
     },
     "nsis": {
