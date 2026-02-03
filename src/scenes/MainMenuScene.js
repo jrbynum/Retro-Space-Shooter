@@ -68,6 +68,12 @@ export default class MainMenuScene extends Phaser.Scene {
             this.scene.start('AboutScene');
         });
 
+        this.volumeText = this.add.text(10, 10, `VOL: ${Math.round(savedVolume * 10)}`, {
+            fontSize: '10px',
+            fill: '#aaa',
+            fontFamily: 'monospace'
+        });
+
         this.add.text(200, 280, 'New Life every 5 Levels', {
             fontSize: '10px',
             fill: '#aaa',
@@ -75,6 +81,11 @@ export default class MainMenuScene extends Phaser.Scene {
         }).setOrigin(0.5);
 
         // Input - Keyboard
+        this.input.keyboard.on('keydown-EQUALS', () => this.adjustVolume(0.1));
+        this.input.keyboard.on('keydown-NUMPAD_ADD', () => this.adjustVolume(0.1));
+        this.input.keyboard.on('keydown-MINUS', () => this.adjustVolume(-0.1));
+        this.input.keyboard.on('keydown-NUMPAD_SUBTRACT', () => this.adjustVolume(-0.1));
+
         this.input.keyboard.once('keydown-SPACE', () => {
             this.scene.start('ShipSelectionScene');
         });
@@ -89,5 +100,13 @@ export default class MainMenuScene extends Phaser.Scene {
                 this.scene.start('ShipSelectionScene');
             });
         }
+    }
+
+    adjustVolume(amount) {
+        let volume = parseFloat(localStorage.getItem('gameVolume') || '1.0');
+        volume = Phaser.Math.Clamp(volume + amount, 0, 1);
+        this.sound.volume = volume;
+        localStorage.setItem('gameVolume', volume.toString());
+        if (this.volumeText) this.volumeText.setText(`VOL: ${Math.round(volume * 10)}`);
     }
 }

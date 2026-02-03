@@ -40,7 +40,7 @@ export default class PreloadScene extends Phaser.Scene {
         this.load.spritesheet('e_2', 'assets/e_2.png', { frameWidth: 48, frameHeight: 48 });
         this.load.spritesheet('e_3', 'assets/e_3.png', { frameWidth: 96, frameHeight: 112 });
         this.load.spritesheet('e_4', 'assets/e_4.png', { frameWidth: 64, frameHeight: 80 });
-        this.load.spritesheet('e_5', 'assets/e_5.png', { frameWidth: 192, frameHeight: 144 });
+        this.load.spritesheet('e_5', 'assets/e_5.png', { frameWidth: 160, frameHeight: 144 });
         this.load.spritesheet('e_6', 'assets/e_6.png', { frameWidth: 64, frameHeight: 64 });
         this.load.spritesheet('e_7', 'assets/e_7.png', { frameWidth: 48, frameHeight: 48 });
         this.load.spritesheet('e_8', 'assets/e_8.png', { frameWidth: 32, frameHeight: 32 });

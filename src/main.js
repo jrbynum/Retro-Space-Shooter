@@ -13,11 +13,15 @@ const config = {
     height: 300,
     backgroundColor: '#000000',
     parent: 'game-container',
+    render: {
+        pixelArt: true,
+        roundPixels: true // Essential to prevent grid lines/seams
+    },
     physics: {
         default: 'arcade',
         arcade: {
             gravity: { y: 0 },
-            debug: false // Forced off
+            debug: false 
         }
     },
     scale: {
@@ -27,8 +31,7 @@ const config = {
     input: {
         gamepad: true
     },
-    scene: [PreloadScene, MainMenuScene, AboutScene, ShipSelectionScene, GameScene, GameOverScene, PowerUpMenuScene],
-    pixelArt: true 
+    scene: [PreloadScene, MainMenuScene, AboutScene, ShipSelectionScene, GameScene, GameOverScene, PowerUpMenuScene]
 };
 
 const game = new Phaser.Game(config);
