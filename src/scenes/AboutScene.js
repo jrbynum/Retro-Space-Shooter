@@ -6,9 +6,9 @@ export default class AboutScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('logo', '/assets/logo.png');
-        this.load.image('bg_about', '/assets/background.png');
-        this.load.image('stars_about', '/assets/stars.png');
+        this.load.image('logo', 'assets/logo.png');
+        this.load.image('bg_about', 'assets/background.png');
+        this.load.image('stars_about', 'assets/stars.png');
     }
 
     create() {

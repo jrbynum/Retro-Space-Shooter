@@ -6,8 +6,8 @@ export default class MainMenuScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('background', '/assets/background.png');
-        this.load.image('stars', '/assets/stars.png');
+        this.load.image('background', 'assets/background.png');
+        this.load.image('stars', 'assets/stars.png');
     }
 
     create() {

@@ -1,19 +1,48 @@
 {
-  "name": "game-project",
+  "name": "roguelike-space-shooter",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "20-Level Roguelike Space Shooter by Manawar",
+  "main": "electron/main.js",
+  "author": "Manawar",
+  "license": "ISC",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "electron": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .\"",
+    "dist": "npm run build && electron-builder",
+    "dist:win": "npm run build && electron-builder --win",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
-    "phaser": "^3.90.0",
-    "vite": "^7.3.1"
+    "phaser": "^3.90.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
+    "electron": "^34.1.1",
+    "electron-builder": "^26.7.0",
+    "vite": "^7.3.1",
+    "wait-on": "^8.0.2"
+  },
+  "build": {
+    "appId": "com.manawar.spaceshooter",
+    "productName": "Rouge Space Shooter",
+    "copyright": "Copyright © 2026 Manawar",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/main.js",
+      "package.json"
+    ],
+    "win": {
+      "target": "portable",
+      "icon": "public/assets/logo.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }
