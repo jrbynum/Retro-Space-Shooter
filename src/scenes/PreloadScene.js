@@ -14,6 +14,8 @@ export default class PreloadScene extends Phaser.Scene {
         this.load.image('boss_bolt', 'assets/boss_bolt.png');
         this.load.image('ufo', 'assets/ufo.png');
         this.load.image('logo', 'assets/logo.png');
+        this.load.image('flare', 'assets/laser.png'); // Use laser tip as particle base
+        this.load.image('asteroid', 'assets/e_15.png'); // Use a rock-like asset
         this.load.spritesheet('explosion', 'assets/explosion.png', { frameWidth: 16, frameHeight: 16 });
         this.load.image('shield_effect', 'assets/shield_icon.png');
         

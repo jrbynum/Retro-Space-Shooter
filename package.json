@@ -8,14 +8,16 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "electron": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .\"",
+    "electron": "concurrently \"npm run dev\" \"wait-on http://127.0.0.1:5173 && cross-env NODE_ENV=development electron .\"",
     "dist": "npm run build && electron-builder",
     "dist:win": "npm run build && electron-builder --win",
+    "dist:steam": "npm run build && electron-builder --win dir",
     "dist:all": "npm run build && electron-builder --win --mac --linux",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "phaser": "^3.90.0"
+    "phaser": "^3.90.0",
+    "steamworks.js": "^0.4.0"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
@@ -35,10 +37,14 @@
     "files": [
       "dist/**/*",
       "electron/main.js",
-      "package.json"
+      "package.json",
+      "steam_appid.txt"
     ],
     "win": {
-      "target": "portable",
+      "target": [
+        "portable",
+        "dir"
+      ],
       "icon": "public/assets/logo.png"
     },
     "mac": {

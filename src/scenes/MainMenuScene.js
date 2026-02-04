@@ -11,95 +11,42 @@ export default class MainMenuScene extends Phaser.Scene {
     }
 
     create() {
-        // Apply saved volume
         const savedVolume = parseFloat(localStorage.getItem('gameVolume') || '1.0');
         this.sound.volume = savedVolume;
-
-        // Load stats
         const highScore = localStorage.getItem('highScore') || '0';
         const initials = localStorage.getItem('highScoreInitials') || '???';
 
-        // Background
         this.add.tileSprite(200, 150, 400, 300, 'background');
         this.add.tileSprite(200, 150, 400, 300, 'stars');
 
-        // Title
-        this.add.text(200, 70, 'ROUGE SPACE', {
-            fontSize: '32px',
-            fill: '#ff0000',
-            fontFamily: 'monospace',
-            fontStyle: 'bold'
-        }).setOrigin(0.5);
+        this.add.text(200, 70, 'RETRO SPACE', { fontSize: '32px', fill: '#ff0000', fontFamily: 'monospace', fontStyle: 'bold' }).setOrigin(0.5);
+        this.add.text(200, 110, 'SHOOTER', { fontSize: '24px', fill: '#ffffff', fontFamily: 'monospace' }).setOrigin(0.5);
+        this.add.text(200, 145, `HIGH SCORE: ${highScore} (${initials})`, { fontSize: '14px', fill: '#ffff00', fontFamily: 'monospace' }).setOrigin(0.5);
 
-        this.add.text(200, 110, 'SHOOTER', {
-            fontSize: '24px',
-            fill: '#ffffff',
-            fontFamily: 'monospace'
-        }).setOrigin(0.5);
+        this.startText = this.add.text(200, 200, 'PRESS SPACE OR BUTTON TO START', { fontSize: '16px', fill: '#00ff00', fontFamily: 'monospace' }).setOrigin(0.5);
+        
+        // Blink effect
+        this.time.addEvent({ delay: 500, callback: () => this.startText.setVisible(!this.startText.visible), loop: true });
 
-        // High Score with Initials
-        this.add.text(200, 145, `HIGH SCORE: ${highScore} (${initials})`, {
-            fontSize: '14px',
-            fill: '#ffff00',
-            fontFamily: 'monospace'
-        }).setOrigin(0.5);
+        this.volumeText = this.add.text(10, 10, `VOL: ${Math.round(savedVolume * 10)}`, { fontSize: '10px', fill: '#aaa', fontFamily: 'monospace' });
 
-        // Instructions
-        this.add.text(200, 190, 'Press SPACE to Start', {
-            fontSize: '16px',
-            fill: '#00ff00',
-            fontFamily: 'monospace'
-        }).setOrigin(0.5);
-
-        this.add.text(200, 235, 'ARROWS: Move | SPACE: Shoot\n+ / - : Volume Control\nGAMEPAD SUPPORTED', {
-            fontSize: '10px',
-            fill: '#cccccc',
-            fontFamily: 'monospace',
-            align: 'center'
-        }).setOrigin(0.5);
-
-        const aboutBtn = this.add.text(200, 260, '[ ABOUT MANAWAR ]', {
-            fontSize: '10px',
-            fill: '#00ffff',
-            fontFamily: 'monospace'
-        }).setOrigin(0.5).setInteractive();
-
-        aboutBtn.on('pointerdown', () => {
-            this.scene.start('AboutScene');
-        });
-
-        this.volumeText = this.add.text(10, 10, `VOL: ${Math.round(savedVolume * 10)}`, {
-            fontSize: '10px',
-            fill: '#aaa',
-            fontFamily: 'monospace'
-        });
-
-        this.add.text(200, 280, 'New Life every 5 Levels', {
-            fontSize: '10px',
-            fill: '#aaa',
-            fontFamily: 'monospace'
-        }).setOrigin(0.5);
-
-        // Input - Keyboard
+        // Key Handlers
         this.input.keyboard.on('keydown-EQUALS', () => this.adjustVolume(0.1));
-        this.input.keyboard.on('keydown-NUMPAD_ADD', () => this.adjustVolume(0.1));
         this.input.keyboard.on('keydown-MINUS', () => this.adjustVolume(-0.1));
-        this.input.keyboard.on('keydown-NUMPAD_SUBTRACT', () => this.adjustVolume(-0.1));
+        this.input.keyboard.on('keydown-A', () => this.scene.start('AboutScene'));
+        // ANY Interaction wakes up the Hardware/Gamepad API
+        this.canStart = false;
+        this.time.delayedCall(500, () => { this.canStart = true; });
 
-        this.input.keyboard.once('keydown-SPACE', () => {
-            this.scene.start('ShipSelectionScene');
-        });
+        this.input.on('pointerdown', () => { if(this.canStart) this.startGame(); });
+        this.input.keyboard.on('keydown-SPACE', () => { if(this.canStart) this.startGame(); });
+        
+        // Gamepad Start
+        this.input.gamepad.on('down', () => { if(this.canStart) this.startGame(); });
+    }
 
-        this.input.keyboard.once('keydown-A', () => {
-            this.scene.start('AboutScene');
-        });
-
-        // Input - Gamepad
-        if (this.input.gamepad) {
-            this.input.gamepad.once('down', (pad, button) => {
-                this.scene.start('ShipSelectionScene');
-            });
-        }
+    startGame() {
+        this.scene.start('ShipSelectionScene');
     }
 
     adjustVolume(amount) {
