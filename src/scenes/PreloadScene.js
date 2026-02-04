@@ -37,7 +37,7 @@ export default class PreloadScene extends Phaser.Scene {
             this.load.audio(`m_${i}`, `assets/m_${i}.ogg`);
         }
 
-        // --- 20 Enemies (Animated) ---
+        // --- 20 Enemies (Animated & Static) ---
         this.load.spritesheet('e_1', 'assets/e_1.png', { frameWidth: 83, frameHeight: 64 });
         this.load.spritesheet('e_2', 'assets/e_2.png', { frameWidth: 48, frameHeight: 48 });
         this.load.spritesheet('e_3', 'assets/e_3.png', { frameWidth: 96, frameHeight: 112 });
@@ -46,20 +46,25 @@ export default class PreloadScene extends Phaser.Scene {
         this.load.spritesheet('e_6', 'assets/e_6.png', { frameWidth: 64, frameHeight: 64 });
         this.load.spritesheet('e_7', 'assets/e_7.png', { frameWidth: 48, frameHeight: 48 });
         this.load.spritesheet('e_8', 'assets/e_8.png', { frameWidth: 32, frameHeight: 32 });
+        this.load.image('e_9', 'assets/e_9.png');
+        this.load.image('e_10', 'assets/e_10.png');
+        this.load.image('e_11', 'assets/e_11.png');
         this.load.spritesheet('e_12', 'assets/e_12.png', { frameWidth: 54, frameHeight: 49 });
+        this.load.image('e_13', 'assets/e_13.png');
         this.load.spritesheet('e_14', 'assets/e_14.png', { frameWidth: 64, frameHeight: 80 });
-        this.load.spritesheet('e_17', 'assets/e_1.png', { frameWidth: 83, frameHeight: 64 });
-        this.load.spritesheet('e_18', 'assets/e_1.png', { frameWidth: 83, frameHeight: 64 });
-        this.load.spritesheet('e_19', 'assets/e_1.png', { frameWidth: 83, frameHeight: 64 });
-        this.load.spritesheet('e_20', 'assets/e_1.png', { frameWidth: 83, frameHeight: 64 });
-        
-        // Statics
-        const eStatics = [9, 10, 11, 13, 15, 16];
-        eStatics.forEach(i => this.load.image(`e_${i}`, `assets/e_${i}.png`));
+        this.load.image('e_15', 'assets/e_15.png');
+        this.load.image('e_16', 'assets/e_16.png');
+        this.load.spritesheet('e_17', 'assets/e_17.png', { frameWidth: 83, frameHeight: 64 });
+        this.load.spritesheet('e_18', 'assets/e_18.png', { frameWidth: 83, frameHeight: 64 });
+        this.load.spritesheet('e_19', 'assets/e_19.png', { frameWidth: 83, frameHeight: 64 });
+        this.load.spritesheet('e_20', 'assets/e_20.png', { frameWidth: 83, frameHeight: 64 });
 
         // --- 20 Bosses (Comprehensive Audit) ---
         this.load.spritesheet('b_1', 'assets/b_1.png', { frameWidth: 144, frameHeight: 64 });
-        this.load.spritesheet('b_3', 'assets/b_3.png', { frameWidth: 192, frameHeight: 144 });
+        this.load.spritesheet('b_2', 'assets/b_2.png', { frameWidth: 192, frameHeight: 144 });
+        this.load.spritesheet('b_3', 'assets/b_3.png', { frameWidth: 96, frameHeight: 80 });
+        this.load.image('b_4', 'assets/b_4.png');
+        this.load.image('b_5', 'assets/b_5.png');
         this.load.spritesheet('b_6', 'assets/b_6.png', { frameWidth: 80, frameHeight: 160 });
         this.load.spritesheet('b_7', 'assets/b_7.png', { frameWidth: 64, frameHeight: 48 });
         this.load.spritesheet('b_8', 'assets/b_8.png', { frameWidth: 80, frameHeight: 64 });
@@ -68,13 +73,13 @@ export default class PreloadScene extends Phaser.Scene {
         this.load.spritesheet('b_11', 'assets/b_11.png', { frameWidth: 160, frameHeight: 96 });
         this.load.spritesheet('b_12', 'assets/b_12.png', { frameWidth: 81, frameHeight: 66 });
         this.load.spritesheet('b_13', 'assets/b_13.png', { frameWidth: 128, frameHeight: 96 });
+        this.load.image('b_14', 'assets/b_14.png');
         this.load.spritesheet('b_15', 'assets/b_15.png', { frameWidth: 144, frameHeight: 80 });
         this.load.spritesheet('b_16', 'assets/b_16.png', { frameWidth: 96, frameHeight: 76 });
-        this.load.spritesheet('b_17', 'assets/b_17.png', { frameWidth: 80, frameHeight: 160 });
+        this.load.spritesheet('b_17', 'assets/b_17.png', { frameWidth: 160, frameHeight: 144 });
         this.load.spritesheet('b_18', 'assets/b_18.png', { frameWidth: 144, frameHeight: 64 });
-
-        const bStatics = [2, 4, 5, 14, 19, 20];
-        bStatics.forEach(i => this.load.image(`b_${i}`, `assets/b_${i}.png`));
+        this.load.image('b_19', 'assets/b_19.png');
+        this.load.image('b_20', 'assets/b_20.png');
     }
 
     create() {

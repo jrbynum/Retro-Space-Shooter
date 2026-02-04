@@ -18,13 +18,24 @@ export default class GameOverScene extends Phaser.Scene {
         // Dark overlay
         this.add.rectangle(200, 150, 400, 300, 0x000000, 0.8).setOrigin(0.5);
 
-        // Game Over Title
-        this.add.text(200, 40, 'GAME OVER', {
-            fontSize: '32px',
-            fill: '#ff0000',
+        // Title
+        const title = data.isVictory ? 'MISSION ACCOMPLISHED' : 'GAME OVER';
+        const titleColor = data.isVictory ? '#ffff00' : '#ff0000';
+        
+        this.add.text(200, 40, title, {
+            fontSize: data.isVictory ? '24px' : '32px',
+            fill: titleColor,
             fontFamily: 'monospace',
             fontStyle: 'bold'
         }).setOrigin(0.5);
+
+        if (data.isVictory) {
+            this.add.text(200, 70, 'You have saved the galaxy!', {
+                fontSize: '14px',
+                fill: '#00ffff',
+                fontFamily: 'monospace'
+            }).setOrigin(0.5);
+        }
 
         if (isNewRecord) {
             this.handleNewHighScore(data.score, data);

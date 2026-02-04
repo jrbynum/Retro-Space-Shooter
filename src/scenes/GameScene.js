@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import Boss from '../objects/Boss';
 import PowerUp from '../objects/PowerUp';
+import { getShipStats } from '../config/shipConfig.js';
 
 export default class GameScene extends Phaser.Scene {
     constructor() {
@@ -10,17 +11,28 @@ export default class GameScene extends Phaser.Scene {
     init(data) {
         this.level = data.level || 1;
         this.score = data.score || 0;
-        this.lives = data.lives !== undefined ? data.lives : 3;
-        this.weaponLevel = data.weaponLevel || 1;
         this.shipId = data.shipId || 1;
+
+        // Get ship-specific stats
+        this.shipStats = getShipStats(this.shipId);
+
+        // Apply ship stats (only use data.lives if continuing from previous level)
+        this.lives = data.lives !== undefined ? data.lives : this.shipStats.stats.lives;
+        this.weaponLevel = data.weaponLevel || this.shipStats.stats.startWeapon;
+
         this.volume = parseFloat(localStorage.getItem('gameVolume') || '1.0');
         this.enemiesKilled = data.enemiesKilled || 0;
         this.enemiesMissed = data.enemiesMissed || 0;
         this.timeScale = 1.0;
-        
-        // Permanent Upgrade Multiplier
+
+        // Ship speed multiplier (combines permanent upgrades + ship stats)
         const speedLevel = parseInt(localStorage.getItem('upgrade_speed') || '0');
-        this.speedMult = 1 + (speedLevel * 0.1);
+        const permanentSpeedBonus = 1 + (speedLevel * 0.1);
+        this.speedMult = permanentSpeedBonus * this.shipStats.stats.speed;
+
+        // Ship fire rate and damage
+        this.fireRateCooldown = this.shipStats.stats.fireRate;
+        this.laserDamage = this.shipStats.stats.damage;
     }
 
     create() {
@@ -32,20 +44,28 @@ export default class GameScene extends Phaser.Scene {
         this.isShielded = false;
         this.shieldTime = 0;
         this.scoreInLevel = 0;
-        this.bossThreshold = 1000;
+        this.bossThreshold = 2000; // Increased from 1000 to account for combo multipliers
         this.difficulty = 1 + (this.level - 1) * 0.25;
+
+        // Combo multiplier system
+        this.comboMultiplier = 1;
+        this.comboKills = 0;
+        this.maxComboMultiplier = 5;
 
         // Visuals
         const bgId = ((this.level - 1) % 20) + 1;
         const bgKey = `bg_${bgId}`;
         this.bg1 = this.add.image(0, 0, bgKey).setOrigin(0, 0);
-        this.bg2 = this.add.image(0, 0, bgKey).setOrigin(0, 0).setFlipY(true);
+        this.bg2 = this.add.image(0, 0, bgKey).setOrigin(0, 0);
+        
         const targetWidth = 400;
         const scale = targetWidth / this.bg1.width;
-        this.bgHeight = Math.floor(this.bg1.height * scale);
-        this.bg1.setDisplaySize(targetWidth, this.bgHeight);
-        this.bg2.setDisplaySize(targetWidth, this.bgHeight);
-        this.bg2.y = -this.bgHeight + 2;
+        // Use exact display size calculations
+        this.bg1.setDisplaySize(targetWidth, this.bg1.height * scale);
+        this.bg2.setDisplaySize(targetWidth, this.bg2.height * scale);
+        
+        // Initial position: bg2 strictly above bg1 with 1px overlap
+        this.bg2.y = -this.bg2.displayHeight + 1;
         this.stars = this.add.tileSprite(0, 0, 400, 300, 'stars').setOrigin(0, 0).setAlpha(0.4).setDepth(1);
 
         // Audio
@@ -84,10 +104,11 @@ export default class GameScene extends Phaser.Scene {
         this.livesText = this.add.text(10, 22, `Lives: ${'❤️'.repeat(this.lives)}`, { fontSize: '12px' });
         this.levelText = this.add.text(330, 10, `LVL ${this.level}`, { fontSize: '12px', fill: '#ff0', fontFamily: 'monospace' });
         this.volumeText = this.add.text(10, 34, `VOL: ${Math.round(this.volume * 10)}`, { fontSize: '10px', fill: '#aaa', fontFamily: 'monospace' });
+        this.comboText = this.add.text(320, 22, 'x1', { fontSize: '16px', fill: '#0ff', fontFamily: 'monospace', fontStyle: 'bold' }).setOrigin(0).setVisible(false);
         this.shieldTimerText = this.add.text(200, 250, '', { fontSize: '14px', fill: '#0ff', fontStyle: 'bold', fontFamily: 'monospace' }).setOrigin(0.5).setVisible(false).setDepth(2000);
         this.statusText = this.add.text(200, 280, '', { fontSize: '10px', fill: '#0f0', fontFamily: 'monospace' }).setOrigin(0.5);
         this.pauseText = this.add.text(200, 140, 'PAUSED', { fontSize: '20px', fill: '#fff', fontFamily: 'monospace' }).setOrigin(0.5).setVisible(false).setDepth(4000);
-        this.exitPromptText = this.add.text(200, 170, 'Press ESC to Exit', { fontSize: '12px', fill: '#aaa', fontFamily: 'monospace' }).setOrigin(0.5).setVisible(false).setDepth(4000);
+        this.exitPromptText = this.add.text(200, 170, 'ESC/Back to Exit', { fontSize: '12px', fill: '#aaa', fontFamily: 'monospace' }).setOrigin(0.5).setVisible(false).setDepth(4000);
 
         this.hb = this.add.graphics().setDepth(3000);
         this.hpText = this.add.text(200, 20, '', { fontSize: '10px', fill: '#0f0', fontStyle: 'bold', fontFamily: 'monospace' }).setOrigin(0.5).setDepth(2001);
@@ -121,7 +142,7 @@ export default class GameScene extends Phaser.Scene {
             this.anims.create({ key: 'explode', frames: this.anims.generateFrameNumbers('explosion'), frameRate: 15, hideOnComplete: true });
         }
         this.spawnTimer = this.time.addEvent({ delay: 1500 / this.difficulty, callback: this.spawnEnemy, callbackScope: this, loop: true });
-        this.ufoTimer = this.time.addEvent({ delay: Phaser.Math.Between(10000, 20000), callback: this.spawnUFO, callbackScope: this, loop: true });
+        this.ufoTimer = this.time.addEvent({ delay: Phaser.Math.Between(8000, 15000), callback: this.spawnUFO, callbackScope: this, loop: true }); // More frequent UFO spawns
         this.hazardTimer = this.time.addEvent({ delay: Phaser.Math.Between(15000, 30000), callback: this.triggerHazard, callbackScope: this, loop: true });
 
         // Rich Presence Initial Update
@@ -152,24 +173,46 @@ export default class GameScene extends Phaser.Scene {
 
     update(time, delta) {
         const pad = this.getPad();
-        if (this.isPaused) { if (Phaser.Input.Keyboard.JustDown(this.keys.esc)) { if (window.electronAPI) window.electronAPI.exitGame(); } return; }
+        
+        // Toggle Pause Inputs (Keyboard & Gamepad)
+        if (Phaser.Input.Keyboard.JustDown(this.keys.pause)) this.togglePause();
         if (pad && (pad.buttons[8] && pad.buttons[8].pressed || pad.buttons[9] && pad.buttons[9].pressed)) {
             if (time > (this.lastPauseTime || 0) + 500) { this.togglePause(); this.lastPauseTime = time; }
         }
+
+        if (this.isPaused) {
+            // ESC key or gamepad Back button to exit/return to menu
+            const backPressed = Phaser.Input.Keyboard.JustDown(this.keys.esc) ||
+                (pad && pad.buttons[8] && pad.buttons[8].pressed && time > (this.lastExitTime || 0) + 500);
+
+            if (backPressed) {
+                this.lastExitTime = time;
+                // Exit game (Electron) or return to main menu (Web)
+                if (window.electronAPI) {
+                    window.electronAPI.exitGame();
+                } else {
+                    this.sound.stopAll();
+                    this.scene.start('MainMenuScene');
+                }
+            }
+            return;
+        }
+
         if (this.isRestarting) return;
 
         // Input
         if (Phaser.Input.Keyboard.JustDown(this.keys.vUp) || Phaser.Input.Keyboard.JustDown(this.keys.vUpN)) this.adjustVolume(0.1);
         if (Phaser.Input.Keyboard.JustDown(this.keys.vDn) || Phaser.Input.Keyboard.JustDown(this.keys.vDnN)) this.adjustVolume(-0.1);
-        if (Phaser.Input.Keyboard.JustDown(this.keys.pause)) this.togglePause();
         if (Phaser.Input.Keyboard.JustDown(this.keys.space)) this.fireLaser();
 
         // Scrolling
         const speed = Math.floor(1 * this.difficulty * this.timeScale);
         this.bg1.y += speed; this.bg2.y += speed;
         this.stars.tilePositionY -= speed * 2;
-        if (this.bg1.y >= 300) this.bg1.y = this.bg2.y - this.bgHeight + 2;
-        if (this.bg2.y >= 300) this.bg2.y = this.bg1.y - this.bgHeight + 2;
+        
+        // Wrap using displayHeight with 1px overlap
+        if (this.bg1.y >= 300) this.bg1.y = this.bg2.y - this.bg2.displayHeight + 1;
+        if (this.bg2.y >= 300) this.bg2.y = this.bg1.y - this.bg1.displayHeight + 1;
 
         // Shield
         if (this.isShielded) {
@@ -195,7 +238,7 @@ export default class GameScene extends Phaser.Scene {
             else if (pad.buttons[15] && pad.buttons[15].pressed) this.player.setVelocityX(200);
             if (pad.buttons[12] && pad.buttons[12].pressed) this.player.setVelocityY(-200);
             else if (pad.buttons[13] && pad.buttons[13].pressed) this.player.setVelocityY(200);
-            if ((pad.buttons[0].pressed || pad.buttons[1].pressed) && time > (this.lFire || 0) + 200) { this.fireLaser(); this.lFire = time; }
+            if ((pad.buttons[0].pressed || pad.buttons[1].pressed) && time > (this.lFire || 0) + this.fireRateCooldown) { this.fireLaser(); this.lFire = time; }
         }
         if (this.cursors.left.isDown) this.player.setVelocityX(-200 * this.speedMult);
         else if (this.cursors.right.isDown) this.player.setVelocityX(200 * this.speedMult);
@@ -206,10 +249,26 @@ export default class GameScene extends Phaser.Scene {
         this.hb.clear(); this.hpText.setText('');
         if (this.boss && this.boss.active && !this.boss.isDead) {
             this.boss.update();
-            const barWidth = 240; const x = 80; const y = 50;
-            this.hb.fillStyle(0x000000, 0.9).fillRect(x-4, y-4, barWidth+8, 20);
-            this.hb.fillStyle(0x00ff00, 1).fillRect(x, y, barWidth * (this.boss.hp/this.boss.maxHp), 12);
-            this.hpText.setPosition(200, y + 25).setText(`BOSS HP: ${Math.floor(this.boss.hp)}`);
+            const barWidth = 280; const barHeight = 16; const x = 60; const y = 45;
+            const hpPercent = this.boss.hp / this.boss.maxHp;
+
+            // Determine health bar color based on HP percentage
+            let barColor;
+            if (hpPercent > 0.6) barColor = 0x00ff00; // Green
+            else if (hpPercent > 0.3) barColor = 0xffff00; // Yellow
+            else barColor = 0xff0000; // Red
+
+            // Background with border
+            this.hb.fillStyle(0x000000, 0.9).fillRect(x-4, y-4, barWidth+8, barHeight+8);
+            this.hb.lineStyle(2, 0xff0000, 1).strokeRect(x-4, y-4, barWidth+8, barHeight+8);
+
+            // Health bar fill
+            this.hb.fillStyle(barColor, 1).fillRect(x, y, barWidth * hpPercent, barHeight);
+
+            // HP text with percentage
+            const percentText = `${Math.floor(hpPercent * 100)}%`;
+            this.hpText.setPosition(200, y + barHeight + 6).setText(`BOSS: ${Math.floor(this.boss.hp)}/${this.boss.maxHp} (${percentText})`);
+
             this.physics.overlap(this.lasers, this.boss, (b, l) => this.handleBossHit(l, b));
             if (!this.isShielded) this.physics.overlap(this.player, this.boss, () => this.hitPlayer(this.player, this.boss));
         }
@@ -218,16 +277,54 @@ export default class GameScene extends Phaser.Scene {
             this.bossTriggered = true; this.triggerBossSpawn();
         }
 
+        // Update combo display
+        if (this.comboMultiplier > 1) {
+            this.comboText.setText(`x${this.comboMultiplier}`).setVisible(true);
+        } else {
+            this.comboText.setVisible(false);
+        }
+
+        // Update enemy movement patterns
+        this.enemies.getChildren().forEach(e => {
+            if (!e.active || !e.body) return;
+            const pattern = e.getData('pattern');
+            if (!pattern || pattern === 'straight') return;
+
+            const startX = e.getData('startX');
+            const spawnTime = e.getData('spawnTime');
+            const elapsed = (time - spawnTime) / 1000; // seconds since spawn
+
+            if (pattern === 'zigzag') {
+                // Zigzag pattern: alternate left/right every 0.5 seconds
+                const zigzagSpeed = 150;
+                const direction = Math.floor(elapsed * 2) % 2 === 0 ? 1 : -1;
+                e.setVelocityX(zigzagSpeed * direction * this.timeScale);
+            } else if (pattern === 'sine') {
+                // Sine wave pattern: smooth horizontal oscillation
+                const amplitude = 60; // How far left/right
+                const frequency = 2; // Speed of oscillation
+                const targetX = startX + Math.sin(elapsed * frequency) * amplitude;
+                e.x = targetX;
+            }
+        });
+
         // Cleanup
         this.lasers.getChildren().forEach(l => { if (l.y < -10) l.destroy(); });
-        this.enemies.getChildren().forEach(e => { 
-            if (e.y > 310) { 
+        this.enemies.getChildren().forEach(e => {
+            if (e.y > 310) {
                 if (e.active && !e.isBoss) {
                     this.enemiesMissed++;
+                    // Reset combo on miss
+                    if (this.comboMultiplier > 1) {
+                        this.comboMultiplier = 1;
+                        this.comboKills = 0;
+                        this.comboText.setTint(0xff0000);
+                        this.time.delayedCall(500, () => { if (this.comboText) this.comboText.clearTint(); });
+                    }
                     if (e.getData('isHealer') && this.boss && this.boss.active && !this.boss.isDead) this.healBoss(Math.floor(this.boss.maxHp * 0.05));
                 }
-                e.destroy(); 
-            } 
+                e.destroy();
+            }
         });
         this.hazards.getChildren().forEach(h => { if (h.y > 350 || h.x < -50 || h.x > 450) h.destroy(); });
     }
@@ -309,7 +406,7 @@ export default class GameScene extends Phaser.Scene {
         if (boss.isDead || boss.hitCooldown) return;
         laser.destroy();
         this.cameras.main.shake(100, 0.005);
-        boss.hp -= 5; boss.setTint(0xff0000); boss.hitCooldown = true;
+        boss.hp -= (5 * this.laserDamage); boss.setTint(0xff0000); boss.hitCooldown = true;
         this.time.delayedCall(100, () => { if (boss.active) { boss.clearTint(); boss.hitCooldown = false; } });
         if (boss.hp <= 0) { boss.isDead = true; this.handleBossVictory(boss); }
     }
@@ -321,12 +418,31 @@ export default class GameScene extends Phaser.Scene {
         this.player.setVelocity(0, 0); boss.setVelocity(0, 0); boss.body.enable = false; boss.setVisible(false);
         this.add.sprite(boss.x, boss.y, 'explosion').setScale(5).play('explode');
         this.sound.play('explosionSfx'); this.hb.clear(); this.hpText.setText('');
+        
         if (this.level === 1) this.triggerAchievement('ACH_SECTOR_1');
-        if (this.level === 20) this.triggerAchievement('ACH_SECTOR_20');
+        
+        if (this.level === 20) {
+            this.triggerAchievement('ACH_SECTOR_20');
+            this.time.delayedCall(2000, () => {
+                this.scene.start('GameOverScene', { 
+                    score: this.score, 
+                    level: this.level, 
+                    enemiesKilled: this.enemiesKilled, 
+                    enemiesMissed: this.enemiesMissed,
+                    isVictory: true 
+                });
+            });
+            return;
+        }
+
         this.time.delayedCall(1500, () => {
             this.add.text(200, 140, 'SECTOR CLEAR', { fontSize: '24px', fill: '#0f0', fontFamily: 'monospace' }).setOrigin(0.5);
             const p = this.add.text(200, 180, 'Press Button to Warp', { fontSize: '14px', fill: '#fff', fontFamily: 'monospace' }).setOrigin(0.5);
-            const next = () => { this.scene.restart({ level: this.level + 1, score: this.score, lives: this.lives, weaponLevel: this.weaponLevel, volume: this.volume, enemiesKilled: this.enemiesKilled, enemiesMissed: this.enemiesMissed, shipId: this.shipId }); };
+            const next = () => { 
+                let nextLives = this.lives;
+                if (this.level % 5 === 0) nextLives++;
+                this.scene.restart({ level: this.level + 1, score: this.score, lives: nextLives, weaponLevel: this.weaponLevel, volume: this.volume, enemiesKilled: this.enemiesKilled, enemiesMissed: this.enemiesMissed, shipId: this.shipId }); 
+            };
             this.input.keyboard.once('keydown-SPACE', next);
             this.time.addEvent({ delay: 100, callback: () => { const pad = this.getPad(); if (pad && pad.buttons.some(b => b.pressed)) next(); }, loop: true });
         });
@@ -339,7 +455,39 @@ export default class GameScene extends Phaser.Scene {
         this.add.sprite(enemy.x, enemy.y, 'explosion').play('explode');
         this.sound.play('explosionSfx');
         enemy.destroy();
-        this.score += 100; this.scoreInLevel += 100; this.enemiesKilled++;
+
+        // Increase combo
+        this.comboKills++;
+        if (this.comboKills >= 3 && this.comboMultiplier < this.maxComboMultiplier) {
+            this.comboMultiplier++;
+            this.comboKills = 0;
+            // Flash combo text when multiplier increases
+            this.comboText.setScale(1.5);
+            this.tweens.add({ targets: this.comboText, scale: 1, duration: 200, ease: 'Back.out' });
+        }
+
+        // Apply combo multiplier to score
+        const baseScore = 100;
+        const earnedScore = baseScore * this.comboMultiplier;
+        this.score += earnedScore;
+        this.scoreInLevel += earnedScore;
+        this.enemiesKilled++;
+
+        // Show score popup with multiplier
+        if (this.comboMultiplier > 1) {
+            const scorePopup = this.add.text(enemy.x, enemy.y - 20, `+${earnedScore}`, {
+                fontSize: '12px', fill: '#0ff', fontFamily: 'monospace', fontStyle: 'bold'
+            }).setOrigin(0.5);
+            this.tweens.add({
+                targets: scorePopup,
+                y: scorePopup.y - 30,
+                alpha: 0,
+                duration: 800,
+                ease: 'Power2',
+                onComplete: () => scorePopup.destroy()
+            });
+        }
+
         this.scoreText.setText(`Score: ${this.score}`);
         let s = localStorage.getItem('totalKilled');
         let total = (s && !isNaN(parseInt(s))) ? parseInt(s) : 0;
@@ -370,7 +518,18 @@ export default class GameScene extends Phaser.Scene {
         const e = this.enemies.create(Phaser.Math.Between(20, 380), -20, `e_${eId}`);
         if (e && e.body) {
             if (e.width > 64) e.setScale(0.5); else if (e.width < 20) e.setScale(2);
+
+            // Assign movement pattern (40% straight, 30% zigzag, 30% sine wave)
+            const patternRoll = Phaser.Math.Between(1, 100);
+            let pattern = 'straight';
+            if (patternRoll > 40 && patternRoll <= 70) pattern = 'zigzag';
+            else if (patternRoll > 70) pattern = 'sine';
+
+            e.setData('pattern', pattern);
+            e.setData('startX', e.x);
+            e.setData('spawnTime', this.time.now);
             e.setVelocityY(100 * this.difficulty * this.timeScale);
+
             if (isBoss) { e.setTint(0x00ff00); e.setData('isHealer', true); }
             const animKey = `anim_e_${eId}`;
             if (!this.anims.exists(animKey)) {

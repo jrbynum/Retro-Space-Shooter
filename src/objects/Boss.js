@@ -2,16 +2,7 @@ import Phaser from 'phaser';
 
 export default class Boss extends Phaser.Physics.Arcade.Sprite {
     constructor(scene, x, y, level) {
-        // --- CORRECTED MAPPING ---
-        // Level 1: Dragon (b_1)
-        // Level 2: Red Mech (b_3)
-        // Level 3+: Rotate rest
-        let bossId = 1;
-        if (level === 1) bossId = 1;
-        else if (level === 2) bossId = 3;
-        else bossId = ((level - 1) % 20) + 1;
-        if (bossId === 1 && level > 1) bossId = 2; // Swap to skip dragon loop early
-
+        const bossId = ((level - 1) % 20) + 1;
         const texture = `b_${bossId}`;
         super(scene, x, y, texture);
         
@@ -20,7 +11,9 @@ export default class Boss extends Phaser.Physics.Arcade.Sprite {
         this.setOrigin(0.5).setDepth(1000);
 
         this.type = bossId;
-        this.hp = Math.floor(100 * Math.pow(1.2, level - 1));
+        // Balanced for combo multipliers: 1.12x per level with higher base
+        // Level 1: 150 HP, Level 10: 415 HP, Level 20: 1150 HP
+        this.hp = Math.floor(150 * Math.pow(1.12, level - 1));
         this.maxHp = this.hp;
         this.isBoss = true;
         this.isDead = false;
